@@ -1,0 +1,8 @@
+streamlit
+pandas
+numpy
+scikit-learn
+sentence-transformers # for embeddings (offline use only)
+rank-bm25 # fast BM25 keyword matching
+jsonlines
+pyyaml
