@@ -182,7 +182,22 @@ def load_candidates(
     candidates: list[dict[str, Any]] = []
     emitted = 0
 
-    with Path(path).open("r", encoding="utf-8") as handle:
+    source_path = Path(path)
+    if source_path.suffix.lower() == ".json":
+        with source_path.open("r", encoding="utf-8") as handle:
+            records = json.load(handle)
+        if not isinstance(records, list):
+            raise ValueError("JSON candidate input must contain a list of candidates")
+        for record in records:
+            if limit is not None and emitted >= limit:
+                break
+            valid, _ = _validate_record(record)
+            if valid:
+                candidates.append(_normalize_candidate(record))
+                emitted += 1
+        return candidates
+
+    with source_path.open("r", encoding="utf-8") as handle:
         for line in handle:
             if limit and emitted >= limit:
                 break

@@ -1,3 +1,13 @@
+---
+title: Offline Resume Screener
+emoji: 📄
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Offline Resume Screener
 
 An offline candidate-discovery pipeline for ranking resumes against a job description. It reads candidate data from a local JSONL file, extracts requirements from a local DOCX job description, filters and scores candidates, removes suspected honeypots, and writes the top 100 results as a CSV submission.
@@ -97,3 +107,26 @@ submission/team_xxx.csv
 ## Offline execution
 
 The runtime pipeline does not call APIs or use the internet. It operates only on local files. Package installation may require internet access if dependencies are not already available in the environment.
+
+## Sandbox demo
+
+Run the small-sample demo locally:
+
+```powershell
+streamlit run app.py
+```
+
+The demo accepts a JSON or JSONL candidate sample of up to 100 records and a JD DOCX upload. It runs the same local filtering, scoring, honeypot removal, and ranking flow, then provides a ranked CSV download.
+
+### Deploy on Hugging Face Spaces
+
+1. Create a Hugging Face account and select **New Space**.
+2. Choose **Docker** as the SDK and make the Space **Public**.
+3. Connect this GitHub repository, or upload the repository files to the Space.
+4. Hugging Face builds the included `Dockerfile`, which starts Streamlit on port 7860.
+5. Open the generated public Space URL and test it with a JSON/JSONL sample of at most 100 candidates plus a JD DOCX.
+6. Add the public Space URL to the submission metadata.
+
+The demo accepts files through its UI. Do not upload or commit the full 100,000-candidate dataset; it is not needed for the sandbox check.
+
+Streamlit Community Cloud can be used in the same way: deploy the repository, select `app.py` as the entry point, and use the generated public URL.
