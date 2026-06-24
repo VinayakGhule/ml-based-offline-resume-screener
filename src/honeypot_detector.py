@@ -154,19 +154,54 @@ def _missing_candidate_id(candidate: Candidate) -> bool:
     return not isinstance(cid, str) or not cid.strip()
 
 
+def _career_history_contradicts_experience(candidate: Candidate) -> bool:
+    years = float(candidate.get("profile", {}).get("years_of_experience", 0))
+    documented_months = sum(
+        int(role.get("duration_months") or 0)
+        for role in candidate.get("career_history", [])
+        if isinstance(role, dict)
+    )
+    return years >= 5 and documented_months <= 12
+
+
+def _expert_skills_without_duration(candidate: Candidate) -> bool:
+    expert_skills = [
+        skill
+        for skill in candidate.get("skills", [])
+        if isinstance(skill, dict) and skill.get("proficiency") == "expert"
+    ]
+    short_duration = [
+        skill for skill in expert_skills if int(skill.get("duration_months") or 0) <= 1
+    ]
+    return len(expert_skills) >= 5 and len(short_duration) >= 5
+
+
+def _compound_profile_contradiction(candidate: Candidate) -> bool:
+    if _impossible_career_timeline(candidate):
+        return True
+    career_contradiction = _career_history_contradicts_experience(candidate)
+    skill_contradiction = _expert_skills_without_duration(candidate)
+    metadata_contradictions = sum(
+        (
+            _impossible_salary(candidate),
+            _signup_after_last_active(candidate),
+            _impossible_experience(candidate),
+        )
+    )
+    return (
+        career_contradiction and (skill_contradiction or metadata_contradictions >= 1)
+    ) or (skill_contradiction and metadata_contradictions >= 1)
+
+
 
 
 
 _RULES: list[tuple] = [
     (_missing_candidate_id,                      "missing_candidate_id"),
-    (_impossible_salary,                          "impossible_salary_range"),
-    (_impossible_experience,                      "impossible_experience"),
+    (_compound_profile_contradiction,             "compound_profile_contradiction"),
     (_perfect_scores_no_activity,                 "perfect_scores_no_activity"),
-    (_active_but_zero_response,                   "active_but_zero_response"),
     (_all_assessment_scores_suspiciously_perfect, "all_assessments_perfect"),
     (_advanced_skills_no_profile,                 "advanced_skills_no_profile"),
-    (_impossible_career_timeline,                 "impossible_career_timeline"),
-    (_signup_after_last_active,                   "signup_after_last_active"),
 ]
 
 

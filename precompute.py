@@ -33,7 +33,7 @@ def precompute(
     honeypot_path: Path = DEFAULT_HONEYPOTS,
     jd_path: Path = DEFAULT_JD,
     jd_output_path: Path = DEFAULT_JD_OUTPUT,
-) -> int:
+) -> tuple[int, int]:
     
     
     from src.loader import load_candidates
@@ -45,7 +45,8 @@ def precompute(
     if not jd_path.exists():
         raise FileNotFoundError(f"Job description not found: {jd_path}")
     jd_intent = parse_jd(jd_path)
-    candidates: list[Candidate] = filter_invalid_candidates(load_candidates(input_path), jd_intent)
+    loaded_candidates = load_candidates(input_path)
+    candidates: list[Candidate] = filter_invalid_candidates(loaded_candidates, jd_intent)
     scored_candidates: list[Candidate] | None = add_skill_scores(candidates, jd_intent)
     candidates = candidates if scored_candidates is None else scored_candidates
     honeypot_ids = _normalise_honeypot_ids(find_honeypots(candidates))
@@ -57,7 +58,7 @@ def precompute(
     with output_path.open("wb") as destination:
         pickle.dump(candidates, destination, protocol=pickle.HIGHEST_PROTOCOL)
     honeypot_path.write_text("".join(f"{candidate_id}\n" for candidate_id in sorted(honeypot_ids)), encoding="utf-8")
-    return len(candidates)
+    return len(loaded_candidates), len(candidates)
 
 
 def main() -> None:
@@ -68,8 +69,12 @@ def main() -> None:
     parser.add_argument("--jd", type=Path, default=DEFAULT_JD)
     parser.add_argument("--jd-output", type=Path, default=DEFAULT_JD_OUTPUT)
     args = parser.parse_args()
-    count = precompute(args.input, args.output, args.honeypots, args.jd, args.jd_output)
-    print(f"Precomputed features for {count:,} candidates.")
+    loaded_count, filtered_count = precompute(args.input, args.output, args.honeypots, args.jd, args.jd_output)
+    honeypot_count = sum(1 for line in args.honeypots.read_text(encoding="utf-8").splitlines() if line.strip())
+    print(
+        f"Loaded {loaded_count:,} candidates; {filtered_count:,} passed JD filters; "
+        f"{honeypot_count:,} honeypots flagged."
+    )
 
 
 if __name__ == "__main__":

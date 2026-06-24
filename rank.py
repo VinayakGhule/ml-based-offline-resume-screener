@@ -30,7 +30,7 @@ from typing import Any
 ROOT               = Path(__file__).resolve().parent
 DEFAULT_FEATURES   = ROOT / "data" / "precomputed" / "features.pkl"
 DEFAULT_HONEYPOTS  = ROOT / "data" / "precomputed" / "honeypot_ids.txt"
-DEFAULT_OUTPUT     = ROOT / "submission" / "team_xxx.csv"
+DEFAULT_OUTPUT     = ROOT / "submission" / "team_Maverick.csv"
 DEFAULT_TOP_N      = 100
 
 Candidate = dict[str, Any]
